@@ -1,0 +1,41 @@
+<div>
+    <!-- Haker news search -->
+    <div ng-if="isHackerNews===1">
+        <div class="card bg-light text-dark">
+            <div class="card-body">Total Records : {{resultList.nbHits}}</div>
+        </div>
+        <!-- Result list iterating -->
+        <div class="card  mt-3 text-white" ng-repeat="item in resultList.hits track by $index">
+            <div class="card-header text-dark">
+                <span ng-bind="item.title"></span> <a href="{{item.url}}" target="_blanck">Click here</a>
+            </div>
+            <div class="card-body text-dark">
+                <strong ng-if="isHide">Author : {{item.author}} |</strong> <span ng-bind="item.points"></span> Points
+            </div>
+        </div>
+        <div class="pagination">
+            <!-- <a  ng-click="fnserachPage(0,'prev')">&laquo;</a> -->
+            <span ng-repeat="page in pagelist">
+                <a  ng-click="fnserachPage(page)" ng-class="{'active':currentPage===page.id}"  ng-if="page.enable" ><span>{{page.id}}</span></a>
+            </span>
+            
+            <a  ng-click="fnserachPage(0,'next')">&raquo;</a>
+          </div>
+    </div>
+    <!-- Hacker news sarch -->
+    <div ng-if="isHackerNews===2">
+        <div class="card bg-light text-dark">
+            <div class="card-body">Query : {{resultList.Query.content}}</div>
+        </div>
+        <!-- Result list iterating -->
+        <div class="card  mt-3 text-white" ng-repeat="item in resultList.Section.children track by $index">
+            <div class="card-header text-dark">
+                <span ng-bind="item.Text.content"></span> <a href="{{item.Url.content}}" target="_blank">Click here</a>
+            </div>
+            <div class="card-body text-dark">
+                <a href="{{item.Image.attributes.source}}" target="_blank">Click here</a>
+                <!-- <strong>Author : </strong> | <span ng-bind="item.points"></span> Points -->
+            </div>
+        </div>
+    </div>
+</div>

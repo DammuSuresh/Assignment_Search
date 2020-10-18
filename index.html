@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Page</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="./main.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular.js"></script>
+</head>
+<body  ng-app="mySearchApp" ng-controller="myCtrl" class="container content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" ng-model="searchString" ng-change="fnsearchString()" ng-model-options="{debounce: 1000}" placeholder="Search " aria-label="Search" aria-describedby="basic-addon1">
+                <div class="input-group-append">
+                    <span class="input-group-text" id="basic-addon1">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                          </svg>
+                    </span>
+                </div>
+                <div class="form-check form-check-inline ml-4">
+                    <input class="form-check-input" ng-model="type" type="radio" name="inlineRadioOptions" ng-change="fnreset()" ng-value="1">
+                    <label class="form-check-label" for="inlineRadio1">Hacker news</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" ng-model="type" name="inlineRadioOptions" ng-change="fnreset()"  ng-value="2">
+                    <label class="form-check-label" for="inlineRadio2">Wiki</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" ng-model="isHideAuthor" name="inlineRadioOptions">
+                    <label class="form-check-label" >Show Author</label>
+                  </div>
+              </div>  
+        </div>
+    </div>
+<!-- {{isHideAuthor}} -->
+
+
+  <div class="row" ng-if="isDataLoaded">
+    <div class="col-md-12" >
+        <search-result result-list="resultList" is-hacker-news="type" fn-search-data="fngetpagewise()" is-hide="isHideAuthor"></search-result>     
+    </div>
+  </div>  
+  <div class="row" ng-if="!isDataLoaded">
+      <div class="col-md-12">
+        <div class="card">           
+            <div class="card-body">
+                <h4>No results</h4>
+            </div>
+          </div>
+      </div>
+  </div>
+</body>
+<script src="./main.js"></script>
+<script src="./searchService.js"></script>
+
+<script src="./searchResult.js"></script>
+</html>
