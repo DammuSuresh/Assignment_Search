@@ -5,7 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Page</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <link rel="stylesheet" href="./main.css">
+    <!-- <link rel="stylesheet" href="./main.css"> -->
+    <style>
+        .content {
+    margin: 82px auto 32px;
+    padding: 0 16px;
+    max-width: 960px;
+  }
+  .pagination {
+    display: inline-block;
+    margin-top: 2rem;
+  }
+  
+  .pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+  }
+  
+  .pagination a.active {
+    background-color: #4CAF50;
+    color: white;
+    border: 1px solid #4CAF50;
+  }
+  
+  .pagination a:hover:not(.active) {background-color: #ddd;}
+  
+  .pagination a:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+  }
+  
+  .pagination a:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+    </style>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular.js"></script>
@@ -56,8 +93,184 @@
       </div>
   </div>
 </body>
-<script src="./main.js"></script>
-<script src="./searchService.js"></script>
+<script>
+    angular.module('mySearchApp',[]).controller('myCtrl',["$scope","searchService",function($scope,searchService){  
+    $scope.type =1;
+    $scope.resultList = [];
+    $scope.isDataLoaded = false;
+    $scope.isHideAuthor = true;
+    
+    $scope.fnreset =  function(){
+        $scope.isDataLoaded = false;
+        $scope.searchString = '';
+        $scope.resultList = [];
+    };
+    $scope.fnsearchString = function(pageno){
+        // $scope.isDataLoaded = false;
+        var url;
+        if($scope.type===1){
+             url = 'http://hn.algolia.com/api/v1/search?query='+$scope.searchString;
+             if(pageno){
+                url = url+'&page='+pageno;
+             }
+        }else{
+            if(!$scope.searchString){
+                return;
+            }
+            url = 'https://en.wikipedia.org/w/api.php?action=opensearch&format=xml&search='+$scope.searchString+'&origin=*';
+        }
+        searchService.searchData(url).then((resp)=>{
+           if(resp.status===200){
+               if(JSON.stringify(resp.data).indexOf("<?xml") !== -1){
+                $scope.resultList = searchService.parseXml(resp.data);
+                console.log($scope.resultList);    
+                $scope.isDataLoaded = true;          
+               }else{
+                $scope.resultList = resp.data;
+                $scope.isDataLoaded = true;
+                // $scope.$broadcast('searchResult',resp.data);
+               }          
+           }
+        },(err)=>{
+            console.log(err);
+        });
+     };
+     $scope.fngetpagewise = function(pageno){
+         //&page=2
+         var pageno = searchService.storePagenumber();
+         console.log(pageno);
+         $scope.fnsearchString(pageno);
+     };
 
-<script src="./searchResult.js"></script>
+}]).service('searchService',['$http','$q',function($http,$q){
+    this.searchData = function(url){
+      return new Promise((resolve,reject)=>{
+        $http.get(url).then((resp)=>{
+            resolve(resp);
+             },(err)=>{
+                reject(err);
+             });
+      });        
+    };
+    this.isJsonStringOrNot = function (val) {
+        try {
+            JSON.parse(val);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    };
+    xml2json = xml => {                                                                                                                                                     
+        var el = xml.nodeType === 9 ? xml.documentElement : xml                                                                                                               
+        var h  = {name: el.nodeName}                                                                                                                                          
+        h.content    = Array.from(el.childNodes || []).filter(e => e.nodeType === 3).map(e => e.textContent).join('').trim()                                                  
+        h.attributes = Array.from(el.attributes || []).filter(a => a).reduce((h, a) => { h[a.name] = a.value; return h }, {})                                                 
+        h.children   = Array.from(el.childNodes || []).filter(e => e.nodeType === 1).map(c => h[c.nodeName] = xml2json(c))                                                    
+        return h                                                                                                                                                              
+      }  
+    this.parseXml = function(xml){
+      let parser = new DOMParser();
+      let xmlDoc = parser.parseFromString(xml,'text/xml');
+      return xml2json(xmlDoc);    
+    }
+    var pageno=1;
+    this.storePagenumber= function(data){
+        if(data){
+            pageno = data;
+        }else{
+            return pageno;
+        }
+    }
+   
+}]).directive('searchResult',function(){ 
+    return {
+    restrict: 'E',
+    scope:{
+       resultList: "=?",
+        isHackerNews: "=?",
+        fnSearchData:"&",
+        isHide:'=?'
+    },
+    template: `<div>
+    <!-- Haker news search -->
+    <div ng-if="isHackerNews===1">
+        <div class="card bg-light text-dark">
+            <div class="card-body">Total Records : {{resultList.nbHits}}</div>
+        </div>
+        <!-- Result list iterating -->
+        <div class="card  mt-3 text-white" ng-repeat="item in resultList.hits track by $index">
+            <div class="card-header text-dark">
+                <span ng-bind="item.title"></span> <a href="{{item.url}}" target="_blanck">Click here</a>
+            </div>
+            <div class="card-body text-dark">
+                <strong ng-if="isHide">Author : {{item.author}} |</strong> <span ng-bind="item.points"></span> Points
+            </div>
+        </div>
+        <div class="pagination">
+            <!-- <a  ng-click="fnserachPage(0,'prev')">&laquo;</a> -->
+            <span ng-repeat="page in pagelist">
+                <a  ng-click="fnserachPage(page)" ng-class="{'active':currentPage===page.id}"  ng-if="page.enable" ><span>{{page.id}}</span></a>
+            </span>
+            
+            <a  ng-click="fnserachPage(0,'next')">&raquo;</a>
+          </div>
+    </div>
+    <!-- Hacker news sarch -->
+    <div ng-if="isHackerNews===2">
+        <div class="card bg-light text-dark">
+            <div class="card-body">Query : {{resultList.Query.content}}</div>
+        </div>
+        <!-- Result list iterating -->
+        <div class="card  mt-3 text-white" ng-repeat="item in resultList.Section.children track by $index">
+            <div class="card-header text-dark">
+                <span ng-bind="item.Text.content"></span> <a href="{{item.Url.content}}" target="_blank">Click here</a>
+            </div>
+            <div class="card-body text-dark">
+                <a href="{{item.Image.attributes.source}}" target="_blank">Click here</a>
+                <!-- <strong>Author : </strong> | <span ng-bind="item.points"></span> Points -->
+            </div>
+        </div>
+    </div>
+</div>`,
+    controller: function ($scope,searchService){
+        if($scope.isHackerNews ===1){
+            $scope.pagelist  =[];
+            // $scope.pagelist  =  Array.from(Array(), (_,i) => i+1);
+            for(let i=1;i<$scope.resultList.nbPages;i++){
+               if(i<=10){
+                $scope.pagelist.push({id:i,enable:true});
+
+               }else{
+                $scope.pagelist.push({id:i,enable:false});
+               }
+            }
+        }
+       
+      $scope.fnserachPage=function(obj,action){
+        console.log('directive');
+       if(obj){
+        $scope.currentPage = obj.id;
+        searchService.storePagenumber(obj.id);
+        $scope.fnSearchData();  
+       } 
+       if(action==='next'){
+        let length =$scope.pagelist.length;
+        var next=0;
+        for(let i=1;i<length;i++){            
+            if($scope.pagelist[i].enable){
+                var next=i+10;
+            }
+            if(next && i<=next){
+                $scope.pagelist[i].enable = true;
+            }else{
+                $scope.pagelist[i].enable = false;
+            }
+         }
+       }     
+      };
+    }
+}
+}
+);
+</script>
 </html>
